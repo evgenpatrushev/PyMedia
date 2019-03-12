@@ -4,7 +4,6 @@ import threading, time
 def imp_def(result, event):
     import download_handler as dl
     result.append(dl)
-    time.sleep(25)
     event.clear()
 
 
@@ -33,7 +32,20 @@ def help_list():
 
 
 def video_function():
-    pass
+
+    def add_video():
+        pass
+
+    def delete_video():
+        pass
+
+    def edit_video():
+        pass
+
+    def list_videos():
+        pass
+
+    return add_video, delete_video, edit_video, list_videos
 
 
 def audio_function():
