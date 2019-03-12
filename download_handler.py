@@ -30,13 +30,13 @@ class MediaHandler:
         self.video_filename = 'video.csv'
 
         # config logging system
-        LOG_FORMAT = "%(level_name)s: %(message)s; at %(asctime)s"
+        LOG_FORMAT = "At %(asctime)s %(levelname)s message: %(message)s"
         logging.basicConfig(filename='logfile.log', level=logging.DEBUG, format=LOG_FORMAT)
         self.logger = logging.getLogger()
 
     def add_video(self, urls_list, convert_list, name_list, m='w'):
         try:
-            if(len(urls_list) != len(convert_list)) or (len(urls_list) == len(name_list)):
+            if (len(urls_list) != len(convert_list)) or (len(urls_list) == len(name_list)):
                 self.logger.error("exception at writing csv into file: \nHave to use same length of urls_list,"
                                   "convert_list anf name_list")
                 return -1
@@ -51,8 +51,8 @@ class MediaHandler:
                     # delete whitespaces
                     if (urls_list[i] != 'Nan' and name_list[i] != 'Nan') \
                             or (urls_list[i] == 'Nan' and name_list[i] == 'Nan'):
-                        print(f"url={urls_list[i]} & video name={name_list[i]} will not be add into list"
-                              "\nYou can't add url and video name with same type of value")
+                        self.logger.warning(f"url={urls_list[i]} & video name={name_list[i]} will not be add into list"
+                                            "\nYou can't add url and video name with same type of value")
                         continue
                     url, convert, name = urls_list[i], convert_list[i], name_list[i]
                     writer.writerow([url, convert, name])
@@ -69,12 +69,12 @@ class MediaHandler:
                 os.chdir('..')
 
                 if convert:
-                    print(f'Download .mp3 for {video_info["title"]}')
+                    self.logger.info(f'Download .mp3 for {video_info["title"]}')
                     # filename without .mp4
                     filename = dl.prepare_filename(info_dict=video_info)[:-4]
                     self.mp4_to_mp3(filename)
         except Exception as e:
-            print(f'Exception at _down_video : \n{e}\n\n')
+            self.logger.error(f'Exception at _down_video : \n{e}\n\n')
             return -1
         return 0
 
@@ -87,17 +87,17 @@ class MediaHandler:
                 line_count = 0
                 for row in csv_reader:
                     if line_count == 0:
-                        print(f'Column names are {", ".join(row)}')
+                        self.logger.debug(f'Column names are {", ".join(row)}')
                         line_count += 1
                     else:
                         data[0].append(row[0])
                         data[1].append(row[1])
                         data[2].append(row[2])
                         line_count += 1
-                print(f'Processed {line_count - 1} lines.')
+                self.logger.debug(f'Processed {line_count - 1} lines.')
 
         except Exception as e:
-            print(f'exception at reading csv file: \n{e}\n\n')
+            self.logger.error(f'exception at reading csv file: \n{e}\n\n')
             return -1
         return data[0], data[1], data[2]
 
@@ -119,13 +119,13 @@ class MediaHandler:
         # --Reading csv for data
         answer = self.read_from_csv()
         if answer == -1:
-            print('stop excecution down_and_convert_all: error')
+            self.logger.warning('Stop execution down_and_convert_all: error at csv read')
             return -1
         else:
             urls, convert_list, name_list = answer
 
         if urls is None:
-            print('no urls inside')
+            self.logger.warning('no urls inside csv at down_and_convert_all func')
             return
 
         # --Sorting data to lists and dict
@@ -155,7 +155,8 @@ class MediaHandler:
             root = self.find(video_name=name, path='.')
 
             if not root:
-                print(f'Haven\'t find this file {name}')
+                self.logger.warning(f'Haven\'t find this file {name} at down_and_convert_all func'
+                                    f'when search for file name')
 
             else:
                 exc = self.change_and_back(func=self.mp4_to_mp3, params=name, new_dir=root)
@@ -187,7 +188,7 @@ class MediaHandler:
                                  new_dir=os.path.join(self.dir, self.audio_dir))
 
         except Exception as e:
-            print('exception at converting mp4 to mp3: \n{}'.format(e))
+            self.logger.error('exception at converting mp4_to_mp3 func: \n{}'.format(e))
             return -1
         finally:
             del clip
